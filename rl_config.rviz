@@ -8,10 +8,7 @@ Panels:
         - /Status1
         - /Grid1
         - /Axes1
-        - /Ideal_velocity1
         - /Ideal_velocity1/Namespaces1
-        - /Marker1
-        - /PointStamped2
       Splitter Ratio: 0.5
     Tree Height: 725
   - Class: rviz/Selection
@@ -73,7 +70,7 @@ Visualization Manager:
       History Length: 1
       Name: PointStamped
       Queue Size: 10
-      Radius: 0.20000000298023224
+      Radius: 0.25
       Topic: /uav_0/agent/goal
       Unreliable: false
       Value: true
@@ -82,7 +79,7 @@ Visualization Manager:
       Marker Topic: /uav_0/agent/ideal_velocity_vector
       Name: Ideal_velocity
       Namespaces:
-        uav_goal_vector: true
+        {}
       Queue Size: 97
       Value: true
     - Class: rviz/Marker
@@ -90,7 +87,7 @@ Visualization Manager:
       Marker Topic: /uav_0/agent/velocity_vector
       Name: Marker
       Namespaces:
-        uav_velocity_vector: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -132,7 +129,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 42.468780517578125
+      Distance: 36.836483001708984
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -140,17 +137,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.433943271636963
-        Y: -0.5704120993614197
-        Z: 7.683535099029541
+        X: -0.1894369274377823
+        Y: -1.3833340406417847
+        Z: 5.691342830657959
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6097968816757202
+      Pitch: 0.5497969388961792
       Target Frame: <Fixed Frame>
-      Yaw: 4.424129486083984
+      Yaw: 4.439129829406738
     Saved: ~
 Window Geometry:
   Displays:

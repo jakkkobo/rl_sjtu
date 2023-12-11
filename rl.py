@@ -48,7 +48,7 @@ if __name__ == "__main__":
                              log_path="./logs/", eval_freq=500,
                              deterministic=True, render=False)
 
-    checkpoint_callback = CheckpointCallback(save_freq=1e4, save_path='./model_2_checkpoints/')
+    checkpoint_callback = CheckpointCallback(save_freq=1e4, save_path='./model_4_checkpoints/')
     
     print("bbbbbb")
 
@@ -88,6 +88,11 @@ if __name__ == "__main__":
         ),
     )
     '''
+
+    del agent
+    agent = PPO.load("ppo_quadrotor_3.zip")
+    agent.set_env(env)
+    print("Model loaded...!")
     
     agent.learn(total_timesteps=1000000, callback = checkpoint_callback)
 
@@ -95,10 +100,9 @@ if __name__ == "__main__":
     mean_reward, std_reward = evaluate_policy(agent, vec_env, n_eval_episodes=20, warn=False)
     print(mean_reward)
 
-    agent.save("ppo_quadrotor_2")
+    agent.save("ppo_quadrotor_4")
     # del agent # remove to demonstrate saving and loading
     # agent = PPO.load("ppo_quadrotor")
-    # print("loaded", agent.predict(obs, deterministic=True))
 
     print("Start evaluation...")
     obs = env.reset()

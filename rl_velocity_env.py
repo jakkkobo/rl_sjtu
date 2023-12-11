@@ -93,7 +93,7 @@ class UAVEnv(gym.Env):
 
             # Check if the UAV is out of the boundaries
             #if self.steps >= 50:
-            if not(-11.0 <= self.uav_pose[0] <= 11 and -11 <= self.uav_pose[1] <= 11 and -11 <= self.uav_pose[2] <= 11):
+            if not(-22.0 <= self.uav_pose[0] <= 22 and -22 <= self.uav_pose[1] <= 22 and -22 <= self.uav_pose[2] <= 22):
                 done = True
                 reward = -self.steps_thr
                 print(reward)
@@ -188,13 +188,13 @@ class UAVEnv(gym.Env):
 
         # Calculate the angular error between the ideal velocity and the current velocity
         angular_error = np.arccos(np.clip(np.dot(ideal_velocity_vector, velocity_vector), -1.0, 1.0))
-        # print("Angular Error: " + str(angular_error))
+        print("Angular Error: " + str(angular_error))
 
         velocity_reward = np.clip(-np.abs(angular_error)/np.pi, -1, 0) # the min reward is -1 
-        # print("Vel: " + str(velocity_reward))
+        print("Vel: " + str(velocity_reward))
 
         # Calculate distance reward
-        distance_reward = np.clip(np.dot(self.rew_w, -np.abs(obs)/38), -1, 0) #18 is the max diagonal distance of the bounding box, therefore the max distance reward is -1
+        distance_reward = np.clip(np.dot(self.rew_w, -np.abs(obs)/76), -1, 0) #76 is the max diagonal distance of the bounding box, therefore the max distance reward is -1
         # print("Dist: " + str(distance_reward))
         
         reward = (distance_reward + velocity_reward)
