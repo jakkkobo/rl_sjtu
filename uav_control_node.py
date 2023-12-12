@@ -8,6 +8,7 @@ from std_msgs.msg import String, Bool
 from geometry_msgs.msg import Twist, PoseStamped, TwistStamped, PointStamped, Point, Vector3
 from nav_msgs.msg import Path, Odometry
 from gazebo_msgs.msg import ModelStates
+from mavros_msgs.msg import PositionTarget
 
 class ControlNode:
     def __init__(self, ID=0):
@@ -289,12 +290,149 @@ class ControlNode_PX4:
         # Spin the node to receive and process messages
         rospy.spin()
 
+class ControlNode_Sentinel:
+    def __init__(self, ID=0):
+
+        # Initialize the global variable to None
+        self.subscriber_message_uavpose = PoseStamped()
+        self.subscriber_message_uavvel = PointStamped()
+        self.control_uavvel = PositionTarget()
+        self.control_uavvel.header.frame_id = ""
+        self.control_uavvel.coordinate_frame = 1
+        self.control_uavvel.type_mask = 4039
+
+        
+        self.goal_position = Point(0,0,0)
+        self.t_value = 0
+        self.stop = False
+        self.reset = True
+        self.ID=ID
+
+        # Initialize the ROS node
+        rospy.init_node('Control_node', anonymous=True)
+
+        # Create a publisher that runs at 50 Hz
+        self.publisher_velocity = rospy.Publisher("/mavros/setpoint_raw/local", PositionTarget, queue_size=10)
+
+        rospy.Timer(rospy.Duration(1.0/20), self.publish_velocity)
+
+        # Create a subscriber
+        rospy.Subscriber("uav_" + str(self.ID) + "/agent/actions", TwistStamped, self._subscriber_agent_callback)
+        rospy.Subscriber("uav_" + str(self.ID) + "/agent/stop", Bool, self._subscriber_stop_callback)
+        rospy.Subscriber("uav_" + str(self.ID) + "/agent/takeoff", Bool, self._subscriber_takeoff_callback)
+        # rospy.Subscriber("/gazebo/model_states", ModelStates, self._gazebo_pose_callback)
+
+        #Get pose and vel from drone
+        rospy.Subscriber("/drone/local_wrt_fixed/pose", PoseStamped, self._mavros_pose_callback)
+        rospy.Subscriber("/drone/local_wrt_fixed/velocity", PointStamped, self._mavros_vel_callback)
+
+
+    def _subscriber_takeoff_callback(self, msg:Bool):
+        # publish velocity to pose (0,0,1)
+        if msg.data == True:
+            while -self.subscriber_message_uavpose.pose.position.z > -1.0:
+                self.control_uavvel.velocity.x = 0
+                self.control_uavvel.velocity.y = 0
+                self.control_uavvel.velocity.z = 0.5
+                self.control_uavvel.header.stamp = rospy.Time.now()
+                self.publisher_velocity.publish(self.control_uavvel)
+
+
+    def publish_velocity(self, event):
+        # Publish the message
+        velocity = self.control_uavvel
+        
+        if self.stop == True:
+            velocity.velocity.x = 0
+            velocity.velocity.y = 0
+            velocity.velocity.z = 0
+
+        velocity.header.stamp = rospy.Time.now()
+        self.publisher_velocity.publish(velocity)
+
+
+    def _subscriber_stop_callback(self, msg:Bool):
+        self.stop = msg.data
+        print("Stop: ", self.stop)
+    
+    
+    def _mavros_pose_callback(self, msg:PoseStamped):
+        
+        # Print the pose information
+        self.subscriber_message_uavpose = msg
+
+
+    def _mavros_vel_callback(self, msg:PointStamped):
+        # Get the pose of the 'iris' model
+        iris_velocity = msg.point
+        
+        # Print the pose information
+        self.subscriber_message_uavvel = iris_velocity
+
+
+
+    # subscribe the action from the agent
+    def _subscriber_agent_callback(self, msg:TwistStamped):
+
+        received_vel = msg.twist
+
+        # sum up the linear and z angular velocity
+        uavvel = Twist(Vector3(0,0,0), Vector3(0,0,0))
+        
+
+        if self.stop == False:
+            uavvel.linear.x = received_vel.linear.x + self.subscriber_message_uavvel.x
+            uavvel.linear.y = received_vel.linear.y + self.subscriber_message_uavvel.y
+            uavvel.linear.z = received_vel.linear.z + self.subscriber_message_uavvel.z
+            # uavvel.angular.z = received_vel.angular.z + self.subscriber_message_uavvel.angular.z
+
+        #limit the velocity to 1 m/s in x and y direction and 0.5 m/s in z direction and 0.174 rad/s in z direction
+        uavvel = self.velocity_limiter(uavvel, 1, 1, 0.5, 0.0)
+        
+
+        # Publish the message
+        msg = PositionTarget()
+        msg.header.stamp = rospy.Time.now()
+        msg.coordinate_frame = 1
+        msg.type_mask = 4039
+        msg.velocity.x = -uavvel.linear.y
+        msg.velocity.y = uavvel.linear.x
+        msg.velocity.z = uavvel.linear.z
+        self.publisher_velocity.publish(msg)
+
+        self.control_uavvel = msg
+
+    def velocity_limiter(self, uavvel, velx, vely, velz, angz):
+        if uavvel.linear.x > velx:
+            uavvel.linear.x = velx
+        elif uavvel.linear.x < -velx:
+            uavvel.linear.x = -velx
+        if uavvel.linear.y > vely:
+            uavvel.linear.y = vely
+        elif uavvel.linear.y < -vely:
+            uavvel.linear.y = -vely
+        if uavvel.linear.z > velz:
+            uavvel.linear.z = velz
+        elif uavvel.linear.z < -velz:
+            uavvel.linear.z = -velz
+        # if uavvel.angular.z > angz:
+        #     uavvel.angular.z = angz
+        # elif uavvel.angular.z < -angz:
+        #     uavvel.angular.z = -angz
+        
+        return uavvel
+
+    def run(self):
+        # Spin the node to receive and process messages
+        rospy.spin()
+
+
 
 if __name__ == '__main__':
     id=get_id(sys.argv[1:])
     print("ID: ",id)
     try:
-        node = ControlNode_PX4(ID=id)
+        node = ControlNode_Sentinel(ID=id)
         node.run()
     except rospy.ROSInterruptException:
         pass

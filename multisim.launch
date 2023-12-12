@@ -1,0 +1,8 @@
+<launch>
+    <group ns="drone0">
+        <include file="$(find sjtu_drone)/launch/simple.launch"> </include>
+    </group>
+    <!-- <group ns="drone1">
+        <include file="$(find sjtu_drone)/launch/simple.launch"> </include>
+    </group> -->
+</launch>
